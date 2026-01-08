@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package ratelimiter;
+
+service RateLimiter {
+  rpc CheckLimit(RateLimitRequest) returns (RateLimitResponse);
+}
+
+message RateLimitRequest {
+  string user_id = 1;
+}
+
+message RateLimitResponse {
+  bool allowed = 1;
+  int32 remaining = 2;
+}

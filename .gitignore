@@ -1,0 +1,42 @@
+# Build directories
+build/
+cmake-build-*/
+out/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Redis data
+dump.rdb
+redis.log
+
+# Compiled binaries
+ratelimiter_server
+ratelimiter_client
+
+# Generated files
+ratelimiter.pb.cc
+ratelimiter.pb.h
+ratelimiter.grpc.pb.cc
+ratelimiter.grpc.pb.h
+ratelimiter_pb2.py
+ratelimiter_pb2_grpc.py
+
+# Dependencies
+redis-plus-plus/
+redis-install/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
