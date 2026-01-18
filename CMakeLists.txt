@@ -58,9 +58,9 @@ pkg_check_modules(PROTOBUF REQUIRED protobuf)
 # Find hiredis
 pkg_check_modules(HIREDIS hiredis)
 if(NOT HIREDIS_FOUND)
-    # Fallback to manual search
-    find_path(HIREDIS_INCLUDE_DIR hiredis/hiredis.h PATHS /opt/homebrew/include /usr/include /usr/local/include)
-    find_library(HIREDIS_LIBRARY hiredis PATHS /opt/homebrew/lib /usr/lib /usr/local/lib)
+    # Fallback to manual search - PRIORITIZE /usr/local (where source builds go)
+    find_path(HIREDIS_INCLUDE_DIR hiredis/hiredis.h PATHS /usr/local/include /usr/include /opt/homebrew/include)
+    find_library(HIREDIS_LIBRARY hiredis PATHS /usr/local/lib /usr/lib /opt/homebrew/lib)
 else()
     set(HIREDIS_INCLUDE_DIR ${HIREDIS_INCLUDE_DIRS})
     set(HIREDIS_LIBRARY ${HIREDIS_LIBRARIES})
@@ -68,13 +68,13 @@ endif()
 
 # Find redis-plus-plus
 find_path(REDIS_PLUS_PLUS_INCLUDE_DIR sw/redis++/redis++.h PATHS 
-    ${CMAKE_SOURCE_DIR}/redis-install/include
     /usr/local/include
+    ${CMAKE_SOURCE_DIR}/redis-install/include
     /usr/include
 )
 find_library(REDIS_PLUS_PLUS_LIBRARY redis++ PATHS 
-    ${CMAKE_SOURCE_DIR}/redis-install/lib
     /usr/local/lib
+    ${CMAKE_SOURCE_DIR}/redis-install/lib
     /usr/lib
 )
 

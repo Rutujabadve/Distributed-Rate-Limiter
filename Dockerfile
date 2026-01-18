@@ -11,7 +11,6 @@ RUN apt-get update && apt-get install -y \
     git \
     libgrpc++-dev \
     protobuf-compiler-grpc \
-    libhiredis-dev \
     libprotobuf-dev \
     pkg-config \
     python3 \
