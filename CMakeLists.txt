@@ -12,7 +12,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ratelimiter.proto)
 
 # Generate gRPC code
-set(GRPC_CPP_PLUGIN "/opt/homebrew/bin/grpc_cpp_plugin")
+find_program(GRPC_CPP_PLUGIN NAMES grpc_cpp_plugin)
+if(NOT GRPC_CPP_PLUGIN)
+    # Primary fallback for Mac/Homebrew if not in PATH
+    set(GRPC_CPP_PLUGIN "/opt/homebrew/bin/grpc_cpp_plugin")
+endif()
+
+message(STATUS "Using gRPC C++ plugin: ${GRPC_CPP_PLUGIN}")
+
 add_custom_command(
     OUTPUT ratelimiter.grpc.pb.cc ratelimiter.grpc.pb.h
     COMMAND protobuf::protoc
@@ -48,21 +55,35 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(GRPC REQUIRED grpc++ grpc)
 pkg_check_modules(PROTOBUF REQUIRED protobuf)
 
-# Find hiredis (installed via Homebrew)
-find_path(HIREDIS_INCLUDE_DIR hiredis/hiredis.h PATHS /opt/homebrew/opt/hiredis/include)
-find_library(HIREDIS_LIBRARY hiredis PATHS /opt/homebrew/opt/hiredis/lib)
+# Find hiredis
+pkg_check_modules(HIREDIS hiredis)
+if(NOT HIREDIS_FOUND)
+    # Fallback to manual search
+    find_path(HIREDIS_INCLUDE_DIR hiredis/hiredis.h PATHS /opt/homebrew/include /usr/include /usr/local/include)
+    find_library(HIREDIS_LIBRARY hiredis PATHS /opt/homebrew/lib /usr/lib /usr/local/lib)
+else()
+    set(HIREDIS_INCLUDE_DIR ${HIREDIS_INCLUDE_DIRS})
+    set(HIREDIS_LIBRARY ${HIREDIS_LIBRARIES})
+endif()
 
-# Use locally installed redis-plus-plus
-set(REDIS_PLUS_PLUS_INSTALL_DIR "${CMAKE_SOURCE_DIR}/redis-install")
-find_path(REDIS_PLUS_PLUS_INCLUDE_DIR sw/redis++/redis++.h PATHS ${REDIS_PLUS_PLUS_INSTALL_DIR}/include)
-find_library(REDIS_PLUS_PLUS_LIBRARY redis++ PATHS ${REDIS_PLUS_PLUS_INSTALL_DIR}/lib)
+# Find redis-plus-plus
+find_path(REDIS_PLUS_PLUS_INCLUDE_DIR sw/redis++/redis++.h PATHS 
+    ${CMAKE_SOURCE_DIR}/redis-install/include
+    /usr/local/include
+    /usr/include
+)
+find_library(REDIS_PLUS_PLUS_LIBRARY redis++ PATHS 
+    ${CMAKE_SOURCE_DIR}/redis-install/lib
+    /usr/local/lib
+    /usr/lib
+)
 
 if(NOT HIREDIS_INCLUDE_DIR OR NOT HIREDIS_LIBRARY)
-    message(FATAL_ERROR "hiredis not found. Please install hiredis: brew install hiredis")
+    message(FATAL_ERROR "hiredis not found.")
 endif()
 
 if(NOT REDIS_PLUS_PLUS_INCLUDE_DIR OR NOT REDIS_PLUS_PLUS_LIBRARY)
-    message(FATAL_ERROR "redis-plus-plus not found. Please build it from source: git clone https://github.com/sewenew/redis-plus-plus.git && cd redis-plus-plus && mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX=${CMAKE_SOURCE_DIR}/redis-install .. && make && make install")
+    message(FATAL_ERROR "redis-plus-plus not found.")
 endif()
 
 # Create server executable
