@@ -14,6 +14,8 @@ RUN apt-get update && apt-get install -y \
     libhiredis-dev \
     libprotobuf-dev \
     pkg-config \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -21,6 +23,12 @@ WORKDIR /app
 # Copy only the files needed for the builder to keep it small
 # (The .dockerignore will handle excluding node_modules/build etc)
 COPY . .
+
+# Install grpcio-tools to generate python files
+RUN pip3 install grpcio-tools
+
+# Generate Python gRPC files
+RUN python3 -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. ratelimiter.proto
 
 # 1. Build redis-plus-plus
 # We use a single thread to avoid memory spikes (OOM)
@@ -57,10 +65,10 @@ COPY --from=builder /app/build/ratelimiter_server /app/ratelimiter_server
 COPY --from=builder /usr/local/lib/libredis++.so* /usr/local/lib/
 RUN ldconfig
 
-# Copy bridge and gRPC files
-COPY proxy_server.py .
-COPY ratelimiter_pb2.py .
-COPY ratelimiter_pb2_grpc.py .
+# Copy bridge and gRPC files (COPY FROM BUILDER NOW)
+COPY --from=builder /app/proxy_server.py .
+COPY --from=builder /app/ratelimiter_pb2.py .
+COPY --from=builder /app/ratelimiter_pb2_grpc.py .
 
 # Install Python requirements
 RUN pip3 install --no-cache-dir fastapi uvicorn grpcio pydantic
