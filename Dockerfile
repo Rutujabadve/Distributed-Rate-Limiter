@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     python3 \
     python3-pip \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -34,7 +35,7 @@ RUN python3 -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. ratelimi
 RUN git clone https://github.com/sewenew/redis-plus-plus.git /app/redis-plus-plus-src
 WORKDIR /app/redis-plus-plus-src
 RUN mkdir -p build && cd build && \
-    cmake -DREDIS_PLUS_PLUS_CXX_STANDARD=17 .. && \
+    cmake -DREDIS_PLUS_PLUS_CXX_STANDARD=17 -DREDIS_PLUS_PLUS_BUILD_ASYNC=OFF .. && \
     make -j1 && \
     make install
 
@@ -56,6 +57,7 @@ RUN apt-get update && apt-get install -y \
     libgrpc++1 \
     libhiredis0.14 \
     libprotobuf23 \
+    libssl3 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -71,7 +73,7 @@ COPY --from=builder /app/ratelimiter_pb2.py .
 COPY --from=builder /app/ratelimiter_pb2_grpc.py .
 
 # Install Python requirements
-RUN pip3 install --no-cache-dir fastapi uvicorn grpcio pydantic
+RUN pip3 install --no-cache-dir fastapi uvicorn grpcio protobuf pydantic
 
 # Startup script
 RUN echo "#!/bin/bash\n./ratelimiter_server &\nsleep 2\npython3 proxy_server.py" > start.sh

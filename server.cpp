@@ -135,13 +135,25 @@ int main(int argc, char **argv) {
     const char *redis_host = std::getenv("REDIS_HOST");
     const char *redis_port = std::getenv("REDIS_PORT");
     const char *redis_password = std::getenv("REDIS_PASSWORD");
+    const char *redis_use_tls = std::getenv("REDIS_USE_TLS");
 
     sw::redis::ConnectionOptions connection_opts;
     connection_opts.host = redis_host ? redis_host : "127.0.0.1";
     connection_opts.port = redis_port ? std::stoi(redis_port) : 6379;
+
+    std::cout << "Connecting to Redis at " << connection_opts.host << ":"
+              << connection_opts.port << "..." << std::endl;
+
     if (redis_password) {
       connection_opts.password = redis_password;
+      std::cout << "Using Redis Password (hidden)" << std::endl;
     }
+
+    if (redis_use_tls && std::string(redis_use_tls) == "true") {
+      std::cout << "Enabling TLS for Redis connection" << std::endl;
+      connection_opts.tls.enabled = true;
+    }
+
     connection_opts.db = 0; // Database number
 
     // Redis connection pool options
