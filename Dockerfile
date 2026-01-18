@@ -53,8 +53,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
-    libgrpc++1.33 \
-    libhiredis1.1 \
+    libgrpc++1 \
+    libhiredis1.0 \
     libprotobuf23 \
     && rm -rf /var/lib/apt/lists/*
 
