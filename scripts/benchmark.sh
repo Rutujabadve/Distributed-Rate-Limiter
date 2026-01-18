@@ -100,3 +100,4 @@ fi
 
 echo ""
 echo -e "${GREEN}✅ Benchmark completed!${NC}"
+

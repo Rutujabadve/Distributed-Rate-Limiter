@@ -1,12 +1,13 @@
+#include <chrono>
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <string>
-#include <chrono>
 
-#include <grpcpp/grpcpp.h>
 #include "ratelimiter.grpc.pb.h"
-#include <sw/redis++/redis++.h>
+#include <grpcpp/grpcpp.h>
 #include <sw/redis++/connection_pool.h>
+#include <sw/redis++/redis++.h>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -55,30 +56,30 @@ public:
   explicit RateLimiterServiceImpl(sw::redis::Redis redis)
       : redis_(std::move(redis)) {}
 
-  Status CheckLimit(ServerContext* context,
-                   const ratelimiter::RateLimitRequest* request,
-                   ratelimiter::RateLimitResponse* response) override {
+  Status CheckLimit(ServerContext *context,
+                    const ratelimiter::RateLimitRequest *request,
+                    ratelimiter::RateLimitResponse *response) override {
     // Start timing measurement
     auto start_time = std::chrono::high_resolution_clock::now();
 
     // Print request received message
-    std::cout << "Request received for user: " << request->user_id() << std::endl;
+    std::cout << "Request received for user: " << request->user_id()
+              << std::endl;
 
     try {
       // Create Redis key for the user
       std::string user_key = "ratelimit:" + request->user_id();
 
       // Token bucket parameters (configurable per user or global)
-      const int64_t capacity = 100;     // Maximum tokens
-      const double refill_rate = 10.0;  // Tokens per second
+      const int64_t capacity = 100;   // Maximum tokens
+      const double refill_rate = 5.0; // Tokens per second
 
       // Execute the Lua script using redis.eval()
       // KEYS[1] = user_key
       // ARGV[1] = capacity, ARGV[2] = refill_rate
       auto result = redis_.eval<std::vector<long long>>(
-          TOKEN_BUCKET_SCRIPT,
-          {user_key},  // KEYS
-          {std::to_string(capacity), std::to_string(refill_rate)}  // ARGV
+          TOKEN_BUCKET_SCRIPT, {user_key},                        // KEYS
+          {std::to_string(capacity), std::to_string(refill_rate)} // ARGV
       );
 
       // Parse the result: {allowed, remaining_tokens}
@@ -95,13 +96,15 @@ public:
 
       // End timing measurement
       auto end_time = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-      std::cout << "Time taken per request: " << duration.count() << " microseconds" << std::endl;
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
+          end_time - start_time);
+      std::cout << "Time taken per request: " << duration.count()
+                << " microseconds" << std::endl;
 
-    } catch (const sw::redis::Error& e) {
+    } catch (const sw::redis::Error &e) {
       std::cerr << "Redis error in CheckLimit: " << e.what() << std::endl;
       return Status(grpc::INTERNAL, "Redis operation failed");
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       std::cerr << "Error in CheckLimit: " << e.what() << std::endl;
       return Status(grpc::INTERNAL, "Internal error");
     }
@@ -111,7 +114,9 @@ public:
 };
 
 void RunServer(sw::redis::Redis redis) {
-  std::string server_address("0.0.0.0:50051");
+  const char *port = std::getenv("SERVER_PORT");
+  std::string server_address =
+      std::string("0.0.0.0:") + (port ? port : "50051");
   RateLimiterServiceImpl service(std::move(redis));
 
   ServerBuilder builder;
@@ -124,17 +129,24 @@ void RunServer(sw::redis::Redis redis) {
   server->Wait();
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   try {
     // Redis connection options
+    const char *redis_host = std::getenv("REDIS_HOST");
+    const char *redis_port = std::getenv("REDIS_PORT");
+    const char *redis_password = std::getenv("REDIS_PASSWORD");
+
     sw::redis::ConnectionOptions connection_opts;
-    connection_opts.host = "127.0.0.1";  // Redis server host
-    connection_opts.port = 6379;         // Redis server port
-    connection_opts.db = 0;              // Database number
+    connection_opts.host = redis_host ? redis_host : "127.0.0.1";
+    connection_opts.port = redis_port ? std::stoi(redis_port) : 6379;
+    if (redis_password) {
+      connection_opts.password = redis_password;
+    }
+    connection_opts.db = 0; // Database number
 
     // Redis connection pool options
     sw::redis::ConnectionPoolOptions pool_opts;
-    pool_opts.size = 3;  // Connection pool size
+    pool_opts.size = 3; // Connection pool size
 
     // Create Redis connection with connection pool
     sw::redis::Redis redis(connection_opts, pool_opts);
@@ -147,10 +159,10 @@ int main(int argc, char** argv) {
     // Run the server with Redis connection
     RunServer(std::move(redis));
 
-  } catch (const sw::redis::Error& e) {
+  } catch (const sw::redis::Error &e) {
     std::cerr << "Redis error: " << e.what() << std::endl;
     return 1;
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;
     return 1;
   }

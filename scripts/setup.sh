@@ -42,3 +42,4 @@ echo "📋 Next steps:"
 echo "1. Start Redis: brew services start redis"
 echo "2. Start server: cd build && ./ratelimiter_server"
 echo "3. Test client: python3 python_client.py"
+

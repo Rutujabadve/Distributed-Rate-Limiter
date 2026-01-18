@@ -14,3 +14,4 @@ message RateLimitResponse {
   bool allowed = 1;
   int32 remaining = 2;
 }
+

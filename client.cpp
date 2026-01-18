@@ -1,18 +1,18 @@
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <thread>
-#include <chrono>
 
-#include <grpcpp/grpcpp.h>
 #include "ratelimiter.grpc.pb.h"
+#include <grpcpp/grpcpp.h>
 
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
+using ratelimiter::RateLimiter;
 using ratelimiter::RateLimitRequest;
 using ratelimiter::RateLimitResponse;
-using ratelimiter::RateLimiter;
 
 class RateLimiterClient {
 public:
@@ -20,9 +20,11 @@ public:
       : stub_(RateLimiter::NewStub(channel)) {}
 
   // Test the rate limiter
-  void TestRateLimit(const std::string& user_id, int num_requests, int delay_ms = 100) {
+  void TestRateLimit(const std::string &user_id, int num_requests,
+                     int delay_ms = 100) {
     std::cout << "\n=== Testing Rate Limiter for user: " << user_id << " ===\n";
-    std::cout << "Token Bucket: 100 tokens capacity, 10 tokens/second refill rate\n\n";
+    std::cout
+        << "Token Bucket: 100 tokens capacity, 5 tokens/second refill rate\n\n";
 
     for (int i = 1; i <= num_requests; ++i) {
       RateLimitRequest request;
@@ -36,9 +38,11 @@ public:
       if (status.ok()) {
         std::cout << "Request " << i << ": "
                   << (response.allowed() ? "ALLOWED" : "DENIED")
-                  << " (remaining tokens: " << response.remaining() << ")" << std::endl;
+                  << " (remaining tokens: " << response.remaining() << ")"
+                  << std::endl;
       } else {
-        std::cout << "Request " << i << ": RPC failed: " << status.error_message() << std::endl;
+        std::cout << "Request " << i
+                  << ": RPC failed: " << status.error_message() << std::endl;
       }
 
       // Delay between requests
@@ -52,7 +56,7 @@ private:
   std::unique_ptr<RateLimiter::Stub> stub_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   // Create client
   RateLimiterClient client(grpc::CreateChannel(
       "localhost:50051", grpc::InsecureChannelCredentials()));
@@ -73,7 +77,7 @@ int main(int argc, char** argv) {
   client.TestRateLimit("user2", 5);
 
   std::cout << "\nTest 4: Exhaust the bucket (no delays between requests)\n";
-  client.TestRateLimit("user3", 120, 0);  // 120 requests, 0ms delay
+  client.TestRateLimit("user3", 120, 0); // 120 requests, 0ms delay
 
   return 0;
 }

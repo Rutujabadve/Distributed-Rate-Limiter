@@ -116,3 +116,4 @@ kill $SERVER_PID 2>/dev/null
 rm -f test_output.log
 
 print_status "Test suite completed!"
+

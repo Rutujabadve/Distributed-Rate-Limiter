@@ -147,6 +147,20 @@ python3 python_client.py
 # Summary: 50 allowed, 0 denied out of 50 requests
 ```
 
+### Running the High-Performance Benchmark
+
+To validate the **10,000+ RPS** capability, run the C++ benchmark tool:
+
+```bash
+# In the build directory
+./benchmark_client 20 1000
+
+# Arguments: <num_threads> <requests_per_thread>
+# Output:
+# ...
+# Throughput (RPS): 13482.82 req/s
+```
+
 ### Server-Side Monitoring
 
 The server provides real-time performance metrics:
@@ -188,16 +202,6 @@ with grpc.insecure_channel('localhost:50051') as channel:
 "
 ```
 
-### Expected Test Results
-
-#### Normal Operation (50 requests)
-![Normal Operation](images/normal_operation.png)
-
-#### Rate Limit Exhausted
-![Rate Limit Exhausted](images/rate_limit_exhausted.png)
-
-#### Performance Metrics
-![Performance Metrics](images/performance_metrics.png)
 
 ### Manual Testing with grpcurl
 
@@ -251,7 +255,7 @@ message RateLimitResponse {
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `capacity` | 100 | Maximum tokens per bucket |
-| `refill_rate` | 10.0 | Tokens added per second |
+| `refill_rate` | 5.0 | Tokens added per second |
 | `redis_host` | 127.0.0.1 | Redis server host |
 | `redis_port` | 6379 | Redis server port |
 | `server_port` | 50051 | gRPC server port |
@@ -265,7 +269,7 @@ export REDIS_HOST=127.0.0.1
 export REDIS_PORT=6379
 export SERVER_PORT=50051
 export BUCKET_CAPACITY=100
-export REFILL_RATE=10.0
+export REFILL_RATE=5.0
 ```
 
 ### Redis Configuration
@@ -300,9 +304,7 @@ cd distributed-rate-limiter
 ./scripts/docs.sh
 ```
 
-## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -319,3 +321,4 @@ For questions or issues:
 ---
 
 **Star this repository** ⭐ if you found it helpful!
+

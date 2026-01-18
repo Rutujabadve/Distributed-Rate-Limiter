@@ -96,3 +96,17 @@ target_link_libraries(ratelimiter_client
         ${GRPC_LDFLAGS}
         ${PROTOBUF_LDFLAGS}
 )
+
+# Create benchmark client executable
+add_executable(benchmark_client benchmark_client.cpp)
+target_include_directories(benchmark_client
+    PRIVATE
+        ${GRPC_INCLUDE_DIRS}
+        ${PROTOBUF_INCLUDE_DIRS}
+)
+target_link_libraries(benchmark_client
+    PRIVATE
+        ratelimiter_proto
+        ${GRPC_LDFLAGS}
+        ${PROTOBUF_LDFLAGS}
+)
