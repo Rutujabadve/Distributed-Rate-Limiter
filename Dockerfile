@@ -54,7 +54,7 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     libgrpc++1 \
-    libhiredis1.0 \
+    libhiredis0.14 \
     libprotobuf23 \
     && rm -rf /var/lib/apt/lists/*
 
