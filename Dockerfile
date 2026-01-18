@@ -30,9 +30,9 @@ RUN pip3 install grpcio-tools
 # Generate Python gRPC files
 RUN python3 -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. ratelimiter.proto
 
-# 1. Build redis-plus-plus
-# We use a single thread to avoid memory spikes (OOM)
-WORKDIR /app/redis-plus-plus
+# 1. Build redis-plus-plus (Clone from source to ensure it exists)
+RUN git clone https://github.com/sewenew/redis-plus-plus.git /app/redis-plus-plus-src
+WORKDIR /app/redis-plus-plus-src
 RUN mkdir -p build && cd build && \
     cmake -DREDIS_PLUS_PLUS_CXX_STANDARD=17 .. && \
     make -j1 && \
