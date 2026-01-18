@@ -31,15 +31,20 @@ RUN pip3 install grpcio-tools
 # Generate Python gRPC files
 RUN python3 -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. ratelimiter.proto
 
-# 1. Build redis-plus-plus (Clone from source to ensure it exists)
+# 1. Build hiredis with SSL support
+RUN git clone --recursive https://github.com/redis/hiredis.git /app/hiredis-src
+WORKDIR /app/hiredis-src
+RUN make USE_SSL=1 && make install
+
+# 2. Build redis-plus-plus with TLS support (Clone from source)
 RUN git clone https://github.com/sewenew/redis-plus-plus.git /app/redis-plus-plus-src
 WORKDIR /app/redis-plus-plus-src
 RUN mkdir -p build && cd build && \
-    cmake -DREDIS_PLUS_PLUS_CXX_STANDARD=17 -DREDIS_PLUS_PLUS_BUILD_ASYNC=OFF .. && \
+    cmake -DREDIS_PLUS_PLUS_CXX_STANDARD=17 -DREDIS_PLUS_PLUS_BUILD_TLS=ON -DREDIS_PLUS_PLUS_BUILD_ASYNC=OFF .. && \
     make -j1 && \
     make install
 
-# 2. Build our C++ Rate Limiter Server
+# 3. Build our C++ Rate Limiter Server
 WORKDIR /app
 RUN mkdir -p build && cd build && \
     cmake .. && \
